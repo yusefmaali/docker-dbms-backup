@@ -1,0 +1,41 @@
+# /compose.yaml
+version: "3"
+name: "ddb"
+
+networks:
+  postgres_default:
+    external: true
+  mysql_default:
+    external: true
+
+services:
+  scheduler:
+    image: "yusefmaali/docker-container-scheduler:latest"
+    restart: always
+    environment:
+      - 'CONTAINER_SCHEDULES=[{"container":"ddb-dbms-backup-1","crontab":"*/5 * * * *"}]'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  dbms-backup:
+    image: "yusefmaali/docker-dbms-backup:latest"
+    restart: no
+    environment:
+      - BACKUP_FILENAME_PREFIX=db_backup
+      - BACKUP_FILE_ROTATION_COUNT=5
+      - COMPRESS=bzip2
+#      - MYSQL_HOST=mysql
+#      - MYSQL_USER=${MYSQL_USER}
+#      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+#      - MYSQL_DATABASE_NAME=${MYSQL_DATABASE_NAME}
+#      - MYSQL_EXTRA_DUMP_PARAMS="--column-statistics=0"
+      - POSTGRES_HOST=postgres_14
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DATABASE_NAME=${POSTGRES_DATABASE_NAME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+    networks:
+      - postgres_default
+      - mysql_default
